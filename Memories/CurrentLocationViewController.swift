@@ -30,6 +30,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     override func viewDidLoad() {
         super.viewDidLoad()
         updateLabels()
+        configureGetButton()
     }
 
 
@@ -128,6 +129,15 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 
+
+    func configureGetButton() {
+        if updatingLocation {
+            getButton.setTitle("Stop", for: .normal)
+        } else {
+            getButton.setTitle("Get My Location", for: .normal)
+        }
+    }
+
     //MARK:- Actions
     @IBAction func getLocation(){
 
@@ -139,8 +149,15 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         if authStatus == .denied || authStatus == .restricted{
 
         }
-        enableLocationService()
+        if updatingLocation{
+            disableLocationBasedFeatures()
+        }else{
+           location = nil
+           lastLocationError = nil
+            enableLocationService()
+        }
         updateLabels()
+        configureGetButton()
     }
 
 
@@ -156,6 +173,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         lastLocationError = error
         disableLocationBasedFeatures()
         updateLabels()
+        configureGetButton()
     }
 
 
@@ -173,14 +191,15 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
 
         if location == nil ||
             location!.horizontalAccuracy > newLocation.horizontalAccuracy {
-            // 4
+
             lastLocationError = nil
             location = newLocation
             updateLabels()
-            // 5
+
             if newLocation.horizontalAccuracy <= locationManager.desiredAccuracy{
                 print("*** We're done!")
             disableLocationBasedFeatures()
+            configureGetButton()
         }
     }
 }
