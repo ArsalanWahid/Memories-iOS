@@ -5,6 +5,11 @@
 //  Created by Arsalan Wahid Asghar on 10/12/18.
 //  Copyright © 2018 asghar. All rights reserved.
 //
+//
+// 1. GetLocation action()
+// 2. askForLocationService()
+// 3. checkAvailableLocationServcies()
+// 4. enableLocationServices() || disableLocationServices()
 
 import UIKit
 import CoreLocation
@@ -16,6 +21,12 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     var location: CLLocation?
     var updatingLocation = false
     var lastLocationError:Error?
+
+    //GeoCoding properties
+    let geocoder = CLGeocoder()
+    var placeMark : CLPlacemark?
+    var performingReverseGeocoding = false
+    var lastGeocodingError: Error?
 
     //MARK:- Outlets
     @IBOutlet weak var messageLabel: UILabel!
@@ -34,14 +45,15 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
 
-    //MARK:- App Logic
-    func enableLocationService(){
+    //MARK:- Location Logic
+    func askForLocationService() {
 
+        //Asks for user permission to use location services
         switch CLLocationManager.authorizationStatus() {
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse:
-            checkLocationServcies()
+            checkAvailableLocationServcies()
         case .authorizedAlways:
             break
         case .restricted, .denied:
@@ -50,69 +62,26 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
     //Check for active location services
-    func checkLocationServcies(){
-        if CLLocationManager.locationServicesEnabled(){
+    func checkAvailableLocationServcies() {
+        if CLLocationManager.locationServicesEnabled() {
             enableLocationBasedFeatures()
-        }else{
+        }else {
             locationServiceDenied(with: "Location Service unavailabe", message: "Enable Location Service From Settings", actionTitle: "ok")
         }
 
-        if CLLocationManager.headingAvailable(){
+        if CLLocationManager.headingAvailable() {
             //Do something realted to headingservice
-        }else{
+        }else {
             //            locationServiceDenied(with: "Heading service not available", message: "Current hardware no supported", actionTitle: "Ok")
         }
     }
 
-
-
-    func locationServiceDenied(with title:String , message:String , actionTitle:String){
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let action = UIAlertAction(title: actionTitle, style: .default, handler: nil)
-        alert.addAction(action)
-        present(alert, animated: true, completion: nil)
-    }
-
-
-    func updateLabels(){
-
-        if let location = location{
-            self.latitudeLabel.text = String(format: "%.8f", location.coordinate.latitude)
-            self.longitudeLabel.text = String(format: "%.8f", location.coordinate.longitude)
-            tagButton.isHidden = false
-            messageLabel.text = ""
-        }else {
-            self.latitudeLabel.text = ""
-            self.longitudeLabel.text = ""
-            tagButton.isHidden = true
-            messageLabel.text = "Tap 'Get Location to Start'"
-
-            //Handle error cases by showing status Messages to user
-            let statusMessage : String
-            if let error = lastLocationError as? NSError{
-                if error.domain == kCLErrorDomain && error.code == CLError.denied.rawValue{
-                    statusMessage = "Location service Disabled"
-                }else{
-                    statusMessage = "Error getting location"
-                }
-
-            }else if !CLLocationManager.locationServicesEnabled(){
-                statusMessage = "Location service disabled"
-            }else if updatingLocation{
-                statusMessage = "searching"
-            }else{
-                statusMessage = "Tap 'Get Location to start'"
-            }
-            messageLabel.text = statusMessage
-        }
-
-    }
-
-    func enableLocationBasedFeatures(){
+    // Start/setup the desired location features
+    func enableLocationBasedFeatures() {
 
         locationManager.delegate = self
         //setting the location accuracy
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
 
         //start getting the users location
         locationManager.startUpdatingLocation()
@@ -120,7 +89,8 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         updatingLocation = true
     }
 
-    func disableLocationBasedFeatures(){
+    //Stop the location features
+    func disableLocationBasedFeatures() {
         //Stops getting the location
         if updatingLocation{
             locationManager.stopUpdatingLocation()
@@ -130,6 +100,50 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
 
+    //MARK:- Alerts
+    func locationServiceDenied(with title:String , message:String , actionTitle:String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let action = UIAlertAction(title: actionTitle, style: .default, handler: nil)
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+
+    //MARK:- View Updates
+    func updateLabels() {
+
+        if let location = location {
+            self.latitudeLabel.text = String(format: "%.8f", location.coordinate.latitude)
+            self.longitudeLabel.text = String(format: "%.8f", location.coordinate.longitude)
+            tagButton.isHidden = false
+            messageLabel.text = ""
+        }else {
+            self.latitudeLabel.text = ""
+            self.longitudeLabel.text = ""
+            tagButton.isHidden = true
+            messageLabel.text = "Tap 'Get My Location to Start'"
+
+            //Show the user the approprite message based on the error recieved from the delegate methodd
+            let statusMessage : String
+            if let error = (lastLocationError as NSError?) {
+
+                if error.domain == kCLErrorDomain && error.code == CLError.denied.rawValue {
+                    statusMessage = "Location service Disabled"
+                }else {
+                    statusMessage = "Error getting location"
+                }
+
+            }else if !CLLocationManager.locationServicesEnabled() {
+                statusMessage = "Location service disabled"
+            }else if updatingLocation {
+                statusMessage = "searching"
+            }else {
+                statusMessage = "Tap 'Get Location to start'"
+            }
+            messageLabel.text = statusMessage
+        }
+    }
+
+    //Changes the text of the get location button
     func configureGetButton() {
         if updatingLocation {
             getButton.setTitle("Stop", for: .normal)
@@ -138,38 +152,46 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 
+
+
+
     //MARK:- Actions
-    @IBAction func getLocation(){
+    @IBAction func getLocation() {
 
         let authStatus = CLLocationManager.authorizationStatus()
 
-        if authStatus == .notDetermined{
-            //
+        if authStatus == .notDetermined {
+            // Do nothing
         }
-        if authStatus == .denied || authStatus == .restricted{
+        if authStatus == .denied || authStatus == .restricted {
+            //Do nothing
+        }
 
-        }
         if updatingLocation{
             disableLocationBasedFeatures()
-        }else{
-           location = nil
-           lastLocationError = nil
-            enableLocationService()
+            configureGetButton()
+        }else {
+            location = nil
+            lastLocationError = nil
+            askForLocationService()
+            updateLabels()
+            configureGetButton()
         }
-        updateLabels()
-        configureGetButton()
     }
 
 
-    //MARK:- CLLocationDelegate
+    //MARK:- CLLocationManagerDelegate
 
-    //Tells delegate that location Manager was unable to get location data
+    //Error In Getting Location Are Obtained Here
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
 
-        //Handle the situation where location is not being recieved
+        print("didFailWithError \(error)")
+
+        //Exit function if there is a location unknow error as device may need more time
         if (error as NSError).code == CLError.locationUnknown.rawValue{
-            return //this should make the function exit
+            return
         }
+
         lastLocationError = error
         disableLocationBasedFeatures()
         updateLabels()
@@ -177,44 +199,54 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
 
-    //Tells delegate new location data is available
+    //New Location Values Are Recieved Here
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        let newLocation = locations.last!
 
+        //Get the last location from the locations array
+        let newLocation = locations.last!
+        print("Location recieved: \(newLocation)")
+
+        print("\(newLocation.timestamp.timeIntervalSinceNow)")
+
+        //Discard old location readings
         if newLocation.timestamp.timeIntervalSinceNow < -5 {
             return
         }
 
+        //Ignore horizonzal accuray values less than zero
         if newLocation.horizontalAccuracy < 0 {
             return
         }
 
-        if location == nil ||
-            location!.horizontalAccuracy > newLocation.horizontalAccuracy {
+        //Check if newlocation has better accuracy than old value
+        if location == nil || location!.horizontalAccuracy > newLocation.horizontalAccuracy {
 
-            lastLocationError = nil
+            //Assign the new Location value
             location = newLocation
+            lastLocationError = nil
             updateLabels()
 
             if newLocation.horizontalAccuracy <= locationManager.desiredAccuracy{
-                print("*** We're done!")
-            disableLocationBasedFeatures()
-            configureGetButton()
+                print("*** Done with Location updates")
+                disableLocationBasedFeatures()
+                configureGetButton()
+            }
+        }
+
+    }
+
+    //Checks Change In Location Permissions
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+
+        switch status {
+        case .restricted,.denied:
+            locationServiceDenied(with: "Location Service Disabled", message: "Please enable from settings", actionTitle: "Oops")
+
+        case .authorizedWhenInUse:
+            checkAvailableLocationServcies()
+
+        case .authorizedAlways, .notDetermined:
+            break
         }
     }
-}
-
-//Checks change in Location Permissions
-func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-    switch status {
-    case .restricted,.denied:
-        locationServiceDenied(with: "Location Service Disabled", message: "Please enable from settings", actionTitle: "Oops")
-    case .authorizedWhenInUse:
-        checkLocationServcies()
-    case .authorizedAlways, .notDetermined:
-        break
-    }
-
-}
-
 }
