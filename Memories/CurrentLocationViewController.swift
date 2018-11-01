@@ -17,16 +17,16 @@ import CoreLocation
 class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate {
 
     //MARK:- Properties
-    let locationManager = CLLocationManager()
-    var location: CLLocation?
+    private let locationManager = CLLocationManager()
+    private var location: CLLocation?
     var updatingLocation = false
-    var lastLocationError:Error?
+    private var lastLocationError:Error?
 
     //GeoCoding properties
-    let geocoder = CLGeocoder()
-    var placeMark : CLPlacemark?
+    private let geocoder = CLGeocoder()
+    private var placeMark : CLPlacemark?
     var performingReverseGeocoding = false
-    var lastGeocodingError: Error?
+    private var lastGeocodingError: Error?
 
     //MARK:- Outlets
     @IBOutlet weak var messageLabel: UILabel!
@@ -46,7 +46,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
 
 
     //MARK:- Location Logic
-    func askForLocationService() {
+    private func askForLocationService() {
 
         //Asks for user permission to use location services
         switch CLLocationManager.authorizationStatus() {
@@ -62,7 +62,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
     //Check for active location services
-    func checkAvailableLocationServcies() {
+    private func checkAvailableLocationServcies() {
         if CLLocationManager.locationServicesEnabled() {
             enableLocationBasedFeatures()
         }else {
@@ -109,13 +109,24 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     }
 
     //MARK:- View Updates
-    func updateLabels() {
+    private func updateLabels() {
 
         if let location = location {
+
             self.latitudeLabel.text = String(format: "%.8f", location.coordinate.latitude)
             self.longitudeLabel.text = String(format: "%.8f", location.coordinate.longitude)
             tagButton.isHidden = false
             messageLabel.text = ""
+
+            if let placemark = placeMark {
+                addressLabel.text = string(from: placemark) //Custom format method
+            }else if performingReverseGeocoding {
+                addressLabel.text = "Performing Reverse Geocoding"
+            }else if lastGeocodingError != nil{
+                addressLabel.text = "Error finding Address"
+            }else{
+                addressLabel.text = "No Address Found"
+            }
         }else {
             self.latitudeLabel.text = ""
             self.longitudeLabel.text = ""
@@ -143,16 +154,40 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 
+    //Custom formatting method for placemark address returned
+    private func string(from placemark: CLPlacemark) -> String {
+        var line1 = ""
+        if let s = placemark.subThoroughfare{
+            line1 += s + " "
+        }
+
+        if let s = placemark.thoroughfare{
+            line1 += s
+        }
+
+        var line2 = ""
+
+        if let s = placemark.locality {
+            line2 += s + " "
+        }
+        if let s = placemark.administrativeArea {
+            line2 += s + " "
+        }
+        if let s = placemark.postalCode {
+            line2 += s
+        }
+
+        return line1 + "\n" + line2
+    }
+
     //Changes the text of the get location button
-    func configureGetButton() {
+    private func configureGetButton() {
         if updatingLocation {
             getButton.setTitle("Stop", for: .normal)
         } else {
             getButton.setTitle("Get My Location", for: .normal)
         }
     }
-
-
 
 
     //MARK:- Actions
@@ -171,6 +206,10 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
             disableLocationBasedFeatures()
             configureGetButton()
         }else {
+
+            //Refersh state properties
+            placeMark = nil
+            lastGeocodingError = nil
             location = nil
             lastLocationError = nil
             askForLocationService()
@@ -206,8 +245,6 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         let newLocation = locations.last!
         print("Location recieved: \(newLocation)")
 
-        print("\(newLocation.timestamp.timeIntervalSinceNow)")
-
         //Discard old location readings
         if newLocation.timestamp.timeIntervalSinceNow < -5 {
             return
@@ -218,6 +255,13 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
             return
         }
 
+        //Managing accuracy issues
+        var distance = CLLocationDistance.greatestFiniteMagnitude
+        if let location = location{
+            distance = newLocation.distance(from: location)
+        }
+        print("*** Distance between reading \(distance)")
+
         //Check if newlocation has better accuracy than old value
         if location == nil || location!.horizontalAccuracy > newLocation.horizontalAccuracy {
 
@@ -226,13 +270,58 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
             lastLocationError = nil
             updateLabels()
 
-            if newLocation.horizontalAccuracy <= locationManager.desiredAccuracy{
+            //MARK:- Location Manager Stopped
+            if newLocation.horizontalAccuracy <= locationManager.desiredAccuracy {
                 print("*** Done with Location updates")
                 disableLocationBasedFeatures()
                 configureGetButton()
+
+                if distance > 0 {
+                    performingReverseGeocoding = false
+                }
+            }
+
+            //Geocoding code
+            if !performingReverseGeocoding {
+                print("*** Going to Geocode")
+                performingReverseGeocoding = true
+
+                //This function is being performed ayncronously and returns handler later
+                geocoder.reverseGeocodeLocation(newLocation, completionHandler: {
+                    (placemarks,error) in
+                    if let error = error {
+                        if (error as NSError).code == CLError.network.rawValue {
+                            print("To many geocoding request being made")
+                        }
+                    }
+                    //print("Found placemarks \(placemarks), error \(error)")
+
+                    self.lastGeocodingError = error
+                    if error == nil , let p = placemarks, !p.isEmpty {
+                        self.placeMark = p.last!
+                    }else{
+                        self.placeMark = nil
+                    }
+
+                    self.performingReverseGeocoding = false
+                    self.updateLabels()
+                })
+                print("*** Done Geocoding")
+            }
+        }else if distance < 1 {
+
+
+            let timeinterval = newLocation.timestamp.timeIntervalSince(location!.timestamp)
+
+            //MARK:- Location Manger Stopped
+            // if there isnt a better reading for 10 sections stop the location manager
+            if timeinterval > 10{
+                print("*** Force Done")
+                disableLocationBasedFeatures()
+                updateLabels()
+                configureGetButton()
             }
         }
-
     }
 
     //Checks Change In Location Permissions
