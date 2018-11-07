@@ -12,6 +12,8 @@
 		D738EB672170C4690022DE18 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D738EB652170C4690022DE18 /* Main.storyboard */; };
 		D738EB692170C46B0022DE18 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D738EB682170C46B0022DE18 /* Assets.xcassets */; };
 		D738EB6C2170C46B0022DE18 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D738EB6A2170C46B0022DE18 /* LaunchScreen.storyboard */; };
+		D78349F02191D485008AC6CD /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78349EF2191D485008AC6CD /* MapViewController.swift */; };
+		D78349F22191DB69008AC6CD /* LocationTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78349F12191DB69008AC6CD /* LocationTableViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +24,8 @@
 		D738EB682170C46B0022DE18 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D738EB6B2170C46B0022DE18 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D738EB6D2170C46B0022DE18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D78349EF2191D485008AC6CD /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
+		D78349F12191DB69008AC6CD /* LocationTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationTableViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +60,8 @@
 			children = (
 				D738EB612170C4690022DE18 /* AppDelegate.swift */,
 				D738EB632170C4690022DE18 /* CurrentLocationViewController.swift */,
+				D78349F12191DB69008AC6CD /* LocationTableViewController.swift */,
+				D78349EF2191D485008AC6CD /* MapViewController.swift */,
 				D738EB652170C4690022DE18 /* Main.storyboard */,
 				D738EB682170C46B0022DE18 /* Assets.xcassets */,
 				D738EB6A2170C46B0022DE18 /* LaunchScreen.storyboard */,
@@ -135,8 +141,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D78349F22191DB69008AC6CD /* LocationTableViewController.swift in Sources */,
 				D738EB642170C4690022DE18 /* CurrentLocationViewController.swift in Sources */,
 				D738EB622170C4690022DE18 /* AppDelegate.swift in Sources */,
+				D78349F02191D485008AC6CD /* MapViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

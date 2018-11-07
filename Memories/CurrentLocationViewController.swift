@@ -28,6 +28,9 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     var performingReverseGeocoding = false
     private var lastGeocodingError: Error?
 
+    //Timer
+    var timer:Timer?
+
     //MARK:- Outlets
     @IBOutlet weak var messageLabel: UILabel!
     @IBOutlet weak var latitudeLabel: UILabel!
@@ -37,11 +40,14 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     @IBOutlet weak var getButton: UIButton!
 
 
+
     //MARK:- View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("This is the class \(self.description)")
         updateLabels()
         configureGetButton()
+
     }
 
 
@@ -79,9 +85,11 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
     // Start/setup the desired location features
     func enableLocationBasedFeatures() {
 
+        timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(didTimeOut), userInfo: nil, repeats: false)
+
         locationManager.delegate = self
         //setting the location accuracy
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
 
         //start getting the users location
         locationManager.startUpdatingLocation()
@@ -96,6 +104,12 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
             locationManager.stopUpdatingLocation()
             locationManager.delegate = nil
             updatingLocation = false
+            lastGeocodingError = nil
+
+            if let timer = timer{
+                //Stop the timer
+                timer.invalidate()
+            }
         }
     }
 
@@ -139,8 +153,10 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
 
                 if error.domain == kCLErrorDomain && error.code == CLError.denied.rawValue {
                     statusMessage = "Location service Disabled"
-                }else {
-                    statusMessage = "Error getting location"
+                }else if error.domain == "KMemoriesErrorDomain"{
+                    statusMessage = "Location timed Out"
+                }else{
+                    statusMessage = "Error Getting Location"
                 }
 
             }else if !CLLocationManager.locationServicesEnabled() {
@@ -218,6 +234,15 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 
+    //custom method for time out
+    @IBAction func didTimeOut() {
+        print("*** Time Out")
+        disableLocationBasedFeatures()
+        lastLocationError = NSError(domain: "KMemoriesErrorDomain", code: 1, userInfo: nil)
+        updateLabels()
+        configureGetButton()
+
+    }
 
     //MARK:- CLLocationManagerDelegate
 
@@ -310,7 +335,6 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
             }
         }else if distance < 1 {
 
-
             let timeinterval = newLocation.timestamp.timeIntervalSince(location!.timestamp)
 
             //MARK:- Location Manger Stopped
@@ -339,3 +363,6 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 }
+
+
+
