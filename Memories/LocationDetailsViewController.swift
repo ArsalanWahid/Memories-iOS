@@ -44,11 +44,13 @@ class LocationDetailsViewController: UITableViewController {
 
     var coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
     var placemark: CLPlacemark?
+    var selectedCategory = "No Category"
 
     //MARK:- Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        categoryLabel.text = selectedCategory
         latitudeTextLabel.text = String(format: "%.8f", coordinate.latitude)
         longitudeTextLabel.text = String(format: "%.8f", coordinate.longitude)
 
@@ -108,6 +110,22 @@ class LocationDetailsViewController: UITableViewController {
         else{
             return 44
         }
+    }
+
+    //MARK:- Navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+       if segue.identifier == "PickCategory" {
+            let controller  = segue.destination as!CategoryPickerViewController
+            controller.selectedCategoryName = selectedCategory
+        }
+    }
+
+
+    //Unwind segue
+    @IBAction func categoryPickerDidPickCategory(_ segue: UIStoryboardSegue){
+        let controller = segue.source as! CategoryPickerViewController
+        selectedCategory = controller.selectedCategoryName
+        categoryLabel.text = selectedCategory
     }
 
 }

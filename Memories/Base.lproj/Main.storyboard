@@ -168,6 +168,9 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="tAK-tI-Grc" kind="show" identifier="PickCategory" id="yR8-ZI-zkF"/>
+                                        </connections>
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
@@ -322,6 +325,38 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RUd-sn-Vcg" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1800" y="-566.19718309859161"/>
+        </scene>
+        <!--Category Picker View Controller-->
+        <scene sceneID="nhu-Ub-tqV">
+            <objects>
+                <tableViewController id="tAK-tI-Grc" customClass="CategoryPickerViewController" customModule="Memories" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="Wzg-2j-DHr">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <prototypes>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="category" id="JC8-GA-AcS">
+                                <rect key="frame" x="0.0" y="28" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="JC8-GA-AcS" id="yfj-aq-RgG">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </tableViewCellContentView>
+                                <connections>
+                                    <segue destination="Qbi-ga-ZVj" kind="unwind" identifier="PickCategory" unwindAction="categoryPickerDidPickCategory:" id="kUO-ad-RDb"/>
+                                </connections>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="tAK-tI-Grc" id="PXh-Z4-xUJ"/>
+                            <outlet property="delegate" destination="tAK-tI-Grc" id="Ss1-0e-P6d"/>
+                        </connections>
+                    </tableView>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lNd-0O-dje" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="Qbi-ga-ZVj" userLabel="Exit" sceneMemberID="exit"/>
+            </objects>
+            <point key="canvasLocation" x="2608" y="-565"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="mV8-88-eGL">
