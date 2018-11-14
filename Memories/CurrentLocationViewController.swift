@@ -124,7 +124,6 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
 
     //MARK:- View Updates
     private func updateLabels() {
-
         if let location = location {
 
             self.latitudeLabel.text = String(format: "%.8f", location.coordinate.latitude)
@@ -234,6 +233,8 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         }
     }
 
+
+
     //custom method for time out
     @IBAction func didTimeOut() {
         print("*** Time Out")
@@ -243,6 +244,20 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         configureGetButton()
 
     }
+
+    //MARK:- Navigation
+
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+
+        //Pass data forward to lcoationDetails Screen
+        if segue.identifier == "tagLocation"{
+            let nvc = segue.destination as! UINavigationController
+            let controller = nvc.topViewController as! LocationDetailsViewController
+            controller.coordinate = location!.coordinate
+            controller.placemark = placeMark
+        }
+    }
+
 
     //MARK:- CLLocationManagerDelegate
 
@@ -285,6 +300,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
         if let location = location{
             distance = newLocation.distance(from: location)
         }
+
         print("*** Distance between reading \(distance)")
 
         //Check if newlocation has better accuracy than old value
@@ -311,7 +327,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
                 print("*** Going to Geocode")
                 performingReverseGeocoding = true
 
-                //This function is being performed ayncronously and returns handler later
+                //This part of the function is being performed asynchronously and returns handler later
                 geocoder.reverseGeocodeLocation(newLocation, completionHandler: {
                     (placemarks,error) in
                     if let error = error {
@@ -322,6 +338,8 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
                     //print("Found placemarks \(placemarks), error \(error)")
 
                     self.lastGeocodingError = error
+
+                    //If there are not errors and a valid placemark was returned
                     if error == nil , let p = placemarks, !p.isEmpty {
                         self.placeMark = p.last!
                     }else{
@@ -331,6 +349,7 @@ class CurrentLocationViewController: UIViewController,CLLocationManagerDelegate 
                     self.performingReverseGeocoding = false
                     self.updateLabels()
                 })
+
                 print("*** Done Geocoding")
             }
         }else if distance < 1 {
